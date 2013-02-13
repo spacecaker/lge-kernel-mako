@@ -33,6 +33,10 @@ struct tz_priv {
 };
 spinlock_t tz_lock;
 
+/* CEILING is 50msec, larger than any standard
+ * frame length, but less than the idle timer.
+ */
+#define CEILING			50000
 #define SWITCH_OFF		200
 #define SWITCH_OFF_RESET_TH	40
 #define SKIP_COUNTER		500
@@ -155,9 +159,16 @@ static void tz_idle(struct kgsl_device *device, struct kgsl_pwrscale *pwrscale,
 		priv->no_switch_cnt = 0;
 	}
 
-	idle = stats.total_time - stats.busy_time;
-	idle = (idle > 0) ? idle : 0;
-	val = __secure_tz_entry(TZ_UPDATE_ID, idle, device->id);
+	/* If there is an extended block of busy processing,
+	 * increase frequency.  Otherwise run the normal algorithm.
+	 */
+	if (stats.busy_time > CEILING) {
+		val = -1;
+	} else {
+		idle = stats.total_time - stats.busy_time;
+		idle = (idle > 0) ? idle : 0;
+		val = __secure_tz_entry(TZ_UPDATE_ID, idle, device->id);
+	}
 	if (val)
 		kgsl_pwrctrl_pwrlevel_change(device,
 					     pwr->active_pwrlevel + val);
