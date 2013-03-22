@@ -23,3 +23,7 @@
 		status = "ok";
 	};
 };
+
+&hsic_host {
+       qcom,phy-sof-workaround;
+};
