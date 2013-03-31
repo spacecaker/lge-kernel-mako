@@ -28,7 +28,6 @@ typedef int (elevator_queue_empty_fn) (struct request_queue *);
 typedef int (elevator_reinsert_req_fn) (struct request_queue *,
 					struct request *);
 typedef bool (elevator_is_urgent_fn) (struct request_queue *);
-typedef int (elevator_queue_empty_fn) (struct request_queue *);
 typedef struct request *(elevator_request_list_fn) (struct request_queue *, struct request *);
 typedef void (elevator_completed_req_fn) (struct request_queue *, struct request *);
 typedef int (elevator_may_queue_fn) (struct request_queue *, int);
