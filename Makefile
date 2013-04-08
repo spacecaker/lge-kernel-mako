@@ -354,8 +354,8 @@ CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 CFLAGS_MODULE   =
 AFLAGS_MODULE   =
 LDFLAGS_MODULE  =
-CFLAGS_KERNEL	= -mcpu=cortex-a9 -march=armv7-a -mfpu=neon -ftree-vectorize -Wno-maybe-uninitialized
-AFLAGS_KERNEL	= -mcpu=cortex-a9 -march=armv7-a -mfpu=neon -ftree-vectorize -Wno-maybe-uninitialized
+CFLAGS_KERNEL	= -mcpu=cortex-a15 -mtune=cortex-a15 -mfpu=neon-vfpv4 -ftree-vectorize -Wno-maybe-uninitialized
+AFLAGS_KERNEL	= -mcpu=cortex-a15 -mtune=cortex-a15 -mfpu=neon-vfpv4 -ftree-vectorize -Wno-maybe-uninitialized
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
 
 
@@ -373,7 +373,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -Werror-implicit-function-declaration \
 		   -Wno-format-security \
 		   -fno-delete-null-pointer-checks -mno-unaligned-access \
-		   -mcpu=cortex-a9 -march=armv7-a -mfpu=neon-vfpv4 -funsafe-math-optimizations \
+		   -mcpu=cortex-a15 -mtune=cortex-a15 -mfpu=neon-vfpv4 -funsafe-math-optimizations \
 		   -fsingle-precision-constant -fpredictive-commoning -fipa-cp-clone \
 		   -fgcse-after-reload -ftree-vectorize -pipe \
 		   -funswitch-loops -floop-interchange \
