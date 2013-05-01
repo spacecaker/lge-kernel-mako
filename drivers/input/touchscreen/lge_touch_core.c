@@ -37,7 +37,6 @@
 
 #include <linux/input/lge_touch_core.h>
 
-
 #ifdef CONFIG_TOUCHSCREEN_SWEEP2WAKE
 #include <linux/input/sweep2wake.h>
 #endif
