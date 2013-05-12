@@ -2132,12 +2132,6 @@ static int touch_probe(struct i2c_client *client,
 
         device_init_wakeup(&client->dev, true);
 
-#ifdef CONFIG_LGE_TOUCH_BOOST
-	boost.evt_cnt = TOUCH_EVENT_COUNT;
-	boost.timer_exp = BOOST_TIMER_EXPIRY;
-	setup_timer(&boost_timer, handle_boost, 0);
-#endif
-
 #if defined(CONFIG_HAS_EARLYSUSPEND)
 	ts->early_suspend.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN + 1;
 	ts->early_suspend.suspend = touch_early_suspend;
