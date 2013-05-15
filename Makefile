@@ -245,8 +245,13 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 
 HOSTCC       = gcc
 HOSTCXX      = g++
-HOSTCFLAGS   = -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wno-unused-parameter -Wno-sign-compare -O2 -fomit-frame-pointer
+ifdef CONFIG_CC_OPTIMIZE_O3
+HOSTCFLAGS   = -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wno-unused-parameter -Wno-sign-compare -O3 -fomit-frame-pointer -fno-delete-null-pointer-checks
+HOSTCXXFLAGS = -O3 -Wall -W -fno-delete-null-pointer-checks
+else
+HOSTCFLAGS   = -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wno-unused-parameter -Wno-sign-compare -O2 -fomit-frame-pointer -fno-delete-null-pointer-checks
 HOSTCXXFLAGS = -O2 -Wall -W -fno-delete-null-pointer-checks
+endif
 
 # Decide whether to build built-in, modular, or both.
 # Normally, just do built-in.
@@ -376,7 +381,11 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -mcpu=cortex-a15 -mtune=cortex-a15 -mfpu=neon-vfpv4 -funsafe-math-optimizations \
 		   -ftree-vectorize -pipe
 KBUILD_AFLAGS_KERNEL :=
+ifdef CONFIG_CC_OPTIMIZE_O3
+KBUILD_CFLAGS_KERNEL := -O3 -mcpu=cortex-a15 -mtune=cortex-a15 -mfpu=neon-vfpv4 -ftree-vectorize -pipe
+else 
 KBUILD_CFLAGS_KERNEL := -O2 -mcpu=cortex-a15 -mtune=cortex-a15 -mfpu=neon-vfpv4 -ftree-vectorize -pipe
+endif
 KBUILD_AFLAGS   := -D__ASSEMBLY__
 KBUILD_AFLAGS_MODULE  := -DMODULE
 KBUILD_CFLAGS_MODULE  := -DMODULE
@@ -566,8 +575,9 @@ all: vmlinux
 
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= -Os
-else
-KBUILD_CFLAGS	+= -O2
+endif
+ifdef CONFIG_CC_OPTIMIZE_O3
+KBUILD_CFLAGS  += -O3 
 endif
 
 include $(srctree)/arch/$(SRCARCH)/Makefile
