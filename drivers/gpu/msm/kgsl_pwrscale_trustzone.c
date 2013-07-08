@@ -40,6 +40,7 @@ struct tz_priv {
 	int governor;
 	unsigned int no_switch_cnt;
 	unsigned int skip_cnt;
+	struct kgsl_power_stats bin;
 };
 spinlock_t tz_lock;
 
@@ -47,6 +48,10 @@ spinlock_t tz_lock;
  * frame length, but less than the idle timer.
  */
 #define CEILING			50000
+/* FLOOR is 5msec to capture up to 3 re-draws
+ * per frame for 60fps content.
+ */
+#define FLOOR			5000
 #define SWITCH_OFF		200
 #define SWITCH_OFF_RESET_TH	40
 #define SKIP_COUNTER		500
@@ -191,16 +196,12 @@ static int simple_governor(struct kgsl_device *device, int idle_stat)
 }
 #endif
 
-static void tz_idle(struct kgsl_device *device, struct kgsl_pwrscale *pwrscale,
-						unsigned int ignore_idle)
+static void tz_idle(struct kgsl_device *device, struct kgsl_pwrscale *pwrscale)
 {
 	struct kgsl_pwrctrl *pwr = &device->pwrctrl;
 	struct tz_priv *priv = pwrscale->priv;
 	struct kgsl_power_stats stats;
 	int val, idle;
-
-	if (ignore_idle)
-		return;
 
 	/* In "performance" mode the clock speed always stays
 	   the same */
@@ -208,7 +209,14 @@ static void tz_idle(struct kgsl_device *device, struct kgsl_pwrscale *pwrscale,
 		return;
 
 	device->ftbl->power_stats(device, &stats);
-	if (stats.total_time == 0)
+	priv->bin.total_time += stats.total_time;
+	priv->bin.busy_time += stats.busy_time;
+	/* Do not waste CPU cycles running this algorithm if
+	 * the GPU just started, or if less than FLOOR time
+	 * has passed since the last run.
+	 */
+	if ((stats.total_time == 0) ||
+		(priv->bin.total_time < FLOOR))
 		return;
 
 	/* If the GPU has stayed in turbo mode for a while, *
@@ -233,7 +241,7 @@ static void tz_idle(struct kgsl_device *device, struct kgsl_pwrscale *pwrscale,
 	if (stats.busy_time > CEILING) {
 		val = -1;
 	} else {
-		idle = stats.total_time - stats.busy_time;
+		idle = priv->bin.total_time - priv->bin.busy_time;
 		idle = (idle > 0) ? idle : 0;
 #ifdef CONFIG_MSM_KGSL_SIMPLE_GOV
 	if (priv->governor == TZ_GOVERNOR_SIMPLE)
@@ -241,9 +249,11 @@ static void tz_idle(struct kgsl_device *device, struct kgsl_pwrscale *pwrscale,
 	else
 		val = __secure_tz_entry(TZ_UPDATE_ID, idle, device->id);
 #else
-		val = __secure_tz_entry(TZ_UPDATE_ID, idle, device->id);
+	val = __secure_tz_entry(TZ_UPDATE_ID, idle, device->id);
 #endif		
 	}
+	priv->bin.total_time = 0;
+	priv->bin.busy_time = 0;
 	if (val) {
 		kgsl_pwrctrl_pwrlevel_change(device,
 					     pwr->active_pwrlevel + val);
@@ -265,6 +275,8 @@ static void tz_sleep(struct kgsl_device *device,
 
 	__secure_tz_entry(TZ_RESET_ID, 0, device->id);
 	priv->no_switch_cnt = 0;
+	priv->bin.total_time = 0;
+	priv->bin.busy_time = 0;
 }
 
 static int tz_init(struct kgsl_device *device, struct kgsl_pwrscale *pwrscale)
