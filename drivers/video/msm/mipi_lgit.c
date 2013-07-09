@@ -213,10 +213,6 @@ static void mipi_lgit_set_backlight_board(struct msm_fb_data_type *mfd)
 	mipi_lgit_pdata->backlight_level(level, 0, 0);
 }
 
-struct syscore_ops panel_syscore_ops = {
-	.shutdown = mipi_lgit_lcd_shutdown,
-};
-
 /******************* begin faux123 sysfs interface *******************/
 static bool calc_checksum(int intArr[]) {
 	int i = 0;
